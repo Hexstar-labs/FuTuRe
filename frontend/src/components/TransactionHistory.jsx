@@ -11,7 +11,17 @@ function fmt(dateStr) {
   return new Date(dateStr).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function TxRow({ tx, onClick, onRetry }) {
+function TxSkeletonRow() {
+  return (
+    <div className="tx-row tx-skeleton" aria-hidden="true" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 0' }}>
+      <span className="tx-skeleton-block" style={{ width: 16, height: 16, borderRadius: 4 }} />
+      <span className="tx-skeleton-block" style={{ width: 80, height: 14, borderRadius: 4 }} />
+      <span className="tx-skeleton-block" style={{ width: 100, height: 14, borderRadius: 4 }} />
+      <span className="tx-skeleton-block" style={{ width: 120, height: 14, borderRadius: 4, marginLeft: 'auto' }} />
+      <span className="tx-skeleton-block" style={{ width: 16, height: 16, borderRadius: 4 }} />
+    </div>
+  );
+}
 function csvEscape(val) {
   const s = val == null ? '' : String(val);
   return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
@@ -290,7 +300,12 @@ export function TransactionHistory({ publicKey }) {
             <button className="tx-page-btn" onClick={() => fetchPage(cursors[cursors.length - 1] ?? null)}>↺ Retry</button>
           </motion.div>
         )}
-        {!error && loaded && (
+        {!error && loading && (
+          <motion.div key="skeleton" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} aria-label="Loading transactions" aria-busy="true">
+            {Array.from({ length: 5 }, (_, i) => <TxSkeletonRow key={i} />)}
+          </motion.div>
+        )}
+        {!error && !loading && loaded && (
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             {txs.length === 0 ? (
               <p className="tx-empty" role="status">No transactions found.</p>
