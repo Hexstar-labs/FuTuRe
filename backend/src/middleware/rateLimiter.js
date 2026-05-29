@@ -35,15 +35,25 @@ function createRateLimiter(options = {}) {
     handler: (req, res, next, options) => {
       const clientIP = getClientIP(req);
       logger.warn({
+      const username = req.body?.username || 'unknown';
+      
+      // Log rate-limit hits with username (not password)
+      rateLimitLogger.warn({
         ip: clientIP,
         path: req.path,
         method: req.method,
+        username,
         whitelist: isWhitelisted(clientIP),
       }, 'Rate limit exceeded');
+      
+      // Set Retry-After header
+      const retryAfter = Math.ceil(windowMs / 1000);
+      res.set('Retry-After', retryAfter.toString());
+      
       res.status(429).json({
         error: options.message.error || message,
         statusCode: 429,
-        retryAfter: options.message.retryAfter || Math.ceil(windowMs / 1000),
+        retryAfter,
       });
     },
   });
